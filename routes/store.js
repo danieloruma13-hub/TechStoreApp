@@ -1,0 +1,18 @@
+import { Router } from 'express';
+import { getCategories, getWishlist, addToWishlist, removeFromWishlist } from '../controllers/storeController.js';
+import { getCart, addToCart, updateCartItem, removeCartItem, clearCart } from '../controllers/cartController.js';
+import { getOrders, createOrder } from '../controllers/orderController.js';
+import { protect } from '../middleware/auth.js';
+const router = Router();
+router.get('/categories', getCategories);
+router.get('/cart', protect, getCart);
+router.post('/cart', protect, addToCart);
+router.put('/cart/:id', protect, updateCartItem);
+router.delete('/cart/:id', protect, removeCartItem);
+router.delete('/cart', protect, clearCart);
+router.get('/wishlist', protect, getWishlist);
+router.post('/wishlist', protect, addToWishlist);
+router.delete('/wishlist/:productId', protect, removeFromWishlist);
+router.get('/orders', protect, getOrders);
+router.post('/orders', protect, createOrder);
+export default router;
