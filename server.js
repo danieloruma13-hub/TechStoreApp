@@ -30,7 +30,7 @@ app.use(cors({
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true
+  credentials: false
 }));
 
 app.use('/api/', rateLimit({ windowMs: 15 * 60 * 1000, max: 300 }));
