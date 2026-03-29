@@ -262,3 +262,76 @@ export const adminUpdateCategory = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// --- SITE SETTINGS ---
+export const getSettings = async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT key, value FROM site_settings');
+    const settings = {};
+    rows.forEach(r => settings[r.key] = r.value);
+    res.json({ success: true, settings });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const updateSettings = async (req, res) => {
+  try {
+    const entries = Object.entries(req.body);
+    for (const [key, value] of entries) {
+      await pool.query(
+        'INSERT INTO site_settings (key, value, updated_at) VALUES ($1, $2, NOW()) ON CONFLICT (key) DO UPDATE SET value=$2, updated_at=NOW()',
+        [key, value]
+      );
+    }
+    res.json({ success: true, message: 'Settings updated' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// --- BANNERS ---
+export const getBanners = async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM banners ORDER BY sort_order ASC');
+    res.json({ success: true, banners: rows });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const createBanner = async (req, res) => {
+  const { title, subtitle, image_url, link, sort_order } = req.body;
+  try {
+    const { rows } = await pool.query(
+      'INSERT INTO banners (title, subtitle, image_url, link, sort_order) VALUES ($1,$2,$3,$4,$5) RETURNING *',
+      [title, subtitle || null, image_url || null, link || null, sort_order || 0]
+    );
+    res.status(201).json({ success: true, banner: rows[0] });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const updateBanner = async (req, res) => {
+  const { title, subtitle, image_url, link, is_active, sort_order } = req.body;
+  try {
+    const { rows } = await pool.query(
+      'UPDATE banners SET title=$1, subtitle=$2, image_url=$3, link=$4, is_active=$5, sort_order=$6 WHERE id=$7 RETURNING *',
+      [title, subtitle || null, image_url || null, link || null, !!is_active, sort_order || 0, req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ success: false, message: 'Banner not found' });
+    res.json({ success: true, banner: rows[0] });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const deleteBanner = async (req, res) => {
+  try {
+    await pool.query('DELETE FROM banners WHERE id=$1', [req.params.id]);
+    res.json({ success: true, message: 'Banner deleted' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
