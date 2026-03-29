@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { protect, adminOnly } from '../middleware/auth.js';
 import {
-  getStats,
+  getStats, getCharts,
   adminGetProducts, adminCreateProduct, adminUpdateProduct, adminDeleteProduct,
   adminGetOrders, adminUpdateOrderStatus,
   adminGetUsers, adminUpdateUserRole,
@@ -14,6 +14,7 @@ const router = Router();
 router.use(protect, adminOnly);
 
 router.get('/stats', getStats);
+router.get('/charts', getCharts);
 
 router.get('/products', adminGetProducts);
 router.post('/products', adminCreateProduct);

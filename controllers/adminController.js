@@ -335,3 +335,49 @@ export const deleteBanner = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+export const getCharts = async (req, res) => {
+  try {
+    const revenueByDay = await pool.query(`
+      SELECT DATE(created_at) as date, 
+             COALESCE(SUM(total_amount),0)::float as revenue,
+             COUNT(*)::int as orders
+      FROM orders 
+      WHERE created_at >= NOW() - INTERVAL '30 days'
+      GROUP BY DATE(created_at) 
+      ORDER BY date ASC
+    `);
+
+    const ordersByStatus = await pool.query(`
+      SELECT status, COUNT(*)::int as count 
+      FROM orders 
+      GROUP BY status
+    `);
+
+    const topProducts = await pool.query(`
+      SELECT name, sold_count, price
+      FROM products 
+      WHERE is_active = true
+      ORDER BY sold_count DESC 
+      LIMIT 6
+    `);
+
+    const usersByDay = await pool.query(`
+      SELECT DATE(created_at) as date, COUNT(*)::int as count
+      FROM users
+      WHERE created_at >= NOW() - INTERVAL '30 days'
+      GROUP BY DATE(created_at)
+      ORDER BY date ASC
+    `);
+
+    res.json({
+      success: true,
+      revenueByDay: revenueByDay.rows,
+      ordersByStatus: ordersByStatus.rows,
+      topProducts: topProducts.rows,
+      usersByDay: usersByDay.rows,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
